@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import '../assets/chat.css'
-import { Avatar, IconButton } from '@mui/material';
+import { Avatar, IconButton, Input } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -8,8 +8,10 @@ import DoneAllIcon from '@mui/icons-material/DoneAll';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import MicIcon from '@mui/icons-material/Mic';
 import io from 'socket.io-client';
-import { renderToString } from 'react-dom/server';
 import ReactDOMServer from 'react-dom/server';
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 
 
@@ -19,6 +21,11 @@ export default function Chat({ userName, roomID, chatName }) {
   const messageInput = document.getElementById('message-input')
   const chatHeaderInfo = document.querySelector('.chat_headerInfo')
   const messageContainer = document.querySelector('.message-container');
+
+  /////////////////////emoji picker////////////////////////////
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedEmoji, setSelectedEmoji] = useState(null);
+
 
   var audio = new Audio('ting.mp3');
 
@@ -62,8 +69,9 @@ export default function Chat({ userName, roomID, chatName }) {
   const sendChat = (message, name, time) => {
 
     const messageHtmlSend = `
-    <p class="chat_message chat_reciever">
+    <p class="chat_message chat_receiver">
     <span class="chat_name">${name}</span>
+    <span class='chatMore'>${ReactDOMServer.renderToString(<ExpandMoreIcon />)}</span>
     <span class="chat">${message}</span>
     <span class="chat_timestamp">${time}</span>
     <span class="tick">
@@ -78,7 +86,6 @@ export default function Chat({ userName, roomID, chatName }) {
 
   useEffect(() => {
 
-    // const name = prompt('Enter your name to join');
     socket.emit('new-user-online', userName);
 
     socket.on('user-online', name => {
@@ -99,6 +106,7 @@ export default function Chat({ userName, roomID, chatName }) {
     };
   }, [socket, userName, someOnesOnline, recievedChat]);
 
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const message = messageInput.value;
@@ -111,22 +119,39 @@ export default function Chat({ userName, roomID, chatName }) {
 
   useEffect(() => {
     roomID && socket.emit('joinRoom', roomID);
-    // document.addEventListener('DOMContentLoaded', function () {
-    //   // Your code here
-    //   messageContainer.innerHTML = ''
-    // });
-    if (messageContainer){
+    if (messageContainer) {
       messageContainer.innerHTML = ''
-    } 
+    }
 
     return () => {
-
+      socket.disconnect();
     }
-  }, [roomID, messageContainer])
+  }, [socket, roomID, messageContainer])
+
+  ///////////////file attachment/////////////////////////
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    console.log('file', file)
+
+    // Emit a Socket.IO event to send the file
+    // socket.emit('sendFile', file);
+  };
+
+
+  ////////////////////////emoji picker///////////////////////
+
+  const toggleEmojiPicker = () => {
+    setShowEmojiPicker((prevState) => !prevState);
+  };
+
+  const handleEmojiSelect = (emoji) => {
+    setSelectedEmoji(emoji.event);
+    console.log('selectedEmoji', selectedEmoji)
+  };
 
 
 
-
+  ////////////////////////////////////////
 
   return (
     <div className='chat'>
@@ -149,6 +174,8 @@ export default function Chat({ userName, roomID, chatName }) {
       </div>
       <div className="message-container chat_body">
         {/* ///////////////////////recieved message/////////////// */}
+        
+
         {/* <p className=' chat_message'>
           <span className='chat_name'>Randy</span>
           <span className='chat'>Hey, There!</span>
@@ -157,7 +184,9 @@ export default function Chat({ userName, roomID, chatName }) {
           </span>
         </p> */}
 
+
         {/* //////////////////////////send message////////////////////////// */}
+
         {/* <p className='chat_message chat_reciever'>
           <span className='chat_name'>Brock</span>
           <span className='chat'>Hey,</span>
@@ -171,13 +200,21 @@ export default function Chat({ userName, roomID, chatName }) {
       </div>
 
       <div className="chat_footer">
-        <IconButton>
+        <IconButton onClick={toggleEmojiPicker}>
           <InsertEmoticonIcon />
         </IconButton>
+
+        {showEmojiPicker && (
+          //   <Picker data={data} onSelect={handleEmojiSelect} showPreview={false} style={{ position: 'absolute', bottom: '80px', right: '16px' }} />
+          <div style={{ position: 'absolute', bottom: '80px', zIndex: '3', left: '30rem' }}><Picker data={data} onEmojiSelect={console.log} onSelect={handleEmojiSelect} /></div>
+        )}
         <IconButton>
-          <AttachFileIcon />
+          <label style={{ cursor: 'pointer' }} htmlFor="file-input">
+            <AttachFileIcon type='file' />
+          </label>
         </IconButton>
         <form id='send-container' onSubmit={handleSubmit}>
+          <input type="file" id="file-input" style={{ display: 'none' }} onChange={handleFileSelect} />
           <input type="text" id='message-input' placeholder='Type a message' />
           <button id='send-btn' type='submit'> send a message</button>
         </form>

@@ -48,7 +48,7 @@
     margin-bottom: 30px;
 }
 
-.chat_reciever {
+.chat_receiver {
     margin-left: auto;
     background-color: #dcf8c6;
 }
@@ -103,4 +103,19 @@
 .chat_footer > .MuiSvgIcon-root {
     padding: 10px;
     color: grey;
+}
+
+.chatMore{
+    display: none;
+}
+
+.chat_message:hover{
+    .chatMore{
+        position: absolute;
+        right: 0;
+        top: 0;
+        color: grey;
+        display: block;
+        cursor: pointer;
+    }
 }
