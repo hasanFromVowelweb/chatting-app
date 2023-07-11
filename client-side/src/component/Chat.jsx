@@ -13,11 +13,13 @@ import ReactDOMServer from 'react-dom/server';
 
 
 
-export default function Chat({userName, roomID, chatName }) {
+export default function Chat({ userName, roomID, chatName }) {
 
   const form = document.getElementById('send-container')
   const messageInput = document.getElementById('message-input')
-  const messageContainer = document.querySelector('.chat_headerInfo')
+  const chatHeaderInfo = document.querySelector('.chat_headerInfo')
+  const messageContainer = document.querySelector('.message-container');
+
   var audio = new Audio('ting.mp3');
 
   const socket = io('http://localhost:3000');
@@ -25,23 +27,22 @@ export default function Chat({userName, roomID, chatName }) {
   const someOnesOnline = (message) => {
     const messageElement = document.createElement('code');
     messageElement.innerText = message && message;
-    messageContainer.append(messageElement)
+    chatHeaderInfo.append(messageElement)
     setTimeout(() => {
-      messageContainer.removeChild(messageElement)
+      chatHeaderInfo.removeChild(messageElement)
     }, 3000)
   }
 
   const someOnesOffline = (message) => {
     const messageElement = document.createElement('code');
     messageElement.innerText = message && message;
-    messageContainer.append(messageElement)
+    chatHeaderInfo.append(messageElement)
     setTimeout(() => {
-      messageContainer.removeChild(messageElement)
+      chatHeaderInfo.removeChild(messageElement)
     }, 3000)
   }
 
   const recievedChat = (message, name, time) => {
-    const messageContainer = document.querySelector('.message-container');
     console.log('message :', message)
     console.log('name :', name)
     console.log('time :', time)
@@ -59,7 +60,6 @@ export default function Chat({userName, roomID, chatName }) {
   }
 
   const sendChat = (message, name, time) => {
-    const messageContainer = document.querySelector('.message-container');
 
     const messageHtmlSend = `
     <p class="chat_message chat_reciever">
@@ -90,7 +90,7 @@ export default function Chat({userName, roomID, chatName }) {
     })
 
     socket.on('userLeftRoom', name => {
-      console.log('name',name)
+      console.log('name', name)
       someOnesOffline(`${name.name} is offline!`)
     })
 
@@ -104,19 +104,26 @@ export default function Chat({userName, roomID, chatName }) {
     const message = messageInput.value;
     const timestamp = new Date().toUTCString()
     sendChat(message, 'You', timestamp)
-    socket.emit('send', {roomID ,message});
+    socket.emit('send', { roomID, message });
     messageInput.value = '';
   };
 
 
- useEffect(()=>{
-  roomID && socket.emit('joinRoom', roomID);
-  return () =>{
+  useEffect(() => {
+    roomID && socket.emit('joinRoom', roomID);
+    // document.addEventListener('DOMContentLoaded', function () {
+    //   // Your code here
+    //   messageContainer.innerHTML = ''
+    // });
+    if (messageContainer){
+      messageContainer.innerHTML = ''
+    } 
 
-  }
- },[roomID])
-   
-  
+    return () => {
+
+    }
+  }, [roomID, messageContainer])
+
 
 
 
@@ -142,16 +149,16 @@ export default function Chat({userName, roomID, chatName }) {
       </div>
       <div className="message-container chat_body">
         {/* ///////////////////////recieved message/////////////// */}
-        <p className=' chat_message'>
+        {/* <p className=' chat_message'>
           <span className='chat_name'>Randy</span>
           <span className='chat'>Hey, There!</span>
           <span className='chat_timestamp'>
             {new Date().toUTCString()}
           </span>
-        </p>
+        </p> */}
 
         {/* //////////////////////////send message////////////////////////// */}
-        <p className='chat_message chat_reciever'>
+        {/* <p className='chat_message chat_reciever'>
           <span className='chat_name'>Brock</span>
           <span className='chat'>Hey,</span>
           <span className='chat_timestamp'>
@@ -160,7 +167,7 @@ export default function Chat({userName, roomID, chatName }) {
           <span className='tick'>
             <DoneAllIcon />
           </span>
-        </p>
+        </p> */}
       </div>
 
       <div className="chat_footer">
@@ -178,6 +185,7 @@ export default function Chat({userName, roomID, chatName }) {
           <MicIcon />
         </IconButton>
       </div>
+
 
     </div>
   )

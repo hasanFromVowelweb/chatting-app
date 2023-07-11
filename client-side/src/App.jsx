@@ -7,13 +7,13 @@ import './assets/app.css'
 function App() {
   const [userName, setUserName]  = useState()
   const [roomID, setRoomID] = useState()
-  const [chatName, setChatName] = useState()
+  const [chatName, setChatName] = useState() 
 
   return (
     <div className='app'>
       <div className="app_body">
-        <Sidebar setUserName={setUserName} setRoomID={setRoomID} setChatName={setChatName}/>
-        <Chat userName={userName} roomID={roomID} chatName={chatName}/>
+        <Sidebar setUserName={setUserName}  setRoomID={setRoomID} setChatName={setChatName}/>
+       <Chat userName={userName} roomID={roomID}  chatName={chatName}/>
       </div>
     </div>
   )
