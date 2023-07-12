@@ -16,7 +16,7 @@ const port = process.env.PORT || 3000
 
 // connect_mongodb()
 
-const users = {}
+const users = new Map()
 
 const rooms = new Map();
 
@@ -26,23 +26,28 @@ const io = new Server(httpServer, {
     }
 });
 
-// io.on("connection", (socket) => {
-//     socket.on('new-user-online', name => {
-//         console.log('new-user.....', name)
-//         users[socket.id] = name;
-//         socket.broadcast.emit('user-online', name)
-//     })
 
-//     socket.on('send', message => {
-//         const timestamp = new Date().toUTCString()
-//         socket.broadcast.emit('receive', { message: message, name: users[socket.id], time: timestamp })
-//     })
 
-//     socket.on('disconnect', message => {
-//         socket.broadcast.emit('left', users[socket.id])
-//         delete users[socket.id]
-//     })
-// });
+
+
+
+io.on("connection", (socket) => {
+    socket.on('new-user-online', name => {
+        console.log('new-user.....', name)
+        users[socket.id] = name;
+        socket.broadcast.emit('user-online', name)
+    })
+
+    socket.on('send', message => {
+        const timestamp = new Date().toUTCString()
+        socket.broadcast.emit('receive', { message: message, name: users[socket.id], time: timestamp })
+    })
+
+    socket.on('disconnect', message => {
+        socket.broadcast.emit('left', users[socket.id])
+        delete users[socket.id]
+    })
+});
 
 io.on("connection", (socket) => {
     socket.on('new-user-online', name => {
@@ -58,22 +63,102 @@ io.on("connection", (socket) => {
         socket.to(roomId).emit('userJoinedRoom', { roomId, userId: socket.id });
     });
 
+
+
     socket.on('send', message => {
+        console.log('users........', users)
         const roomId = rooms.get(socket.id);
+        
         const timestamp = new Date().toUTCString();
-        socket.to(roomId).emit('receive', { message, name: users[socket.id], time: timestamp });
+        console.log('messageV1.......', message)
+        const recipientId = message.recipientId;
+        console.log(users[recipientId])
+        console.log('recipientId', recipientId)
+        if (recipientId != undefined) {
+
+            io.to(recipientId).emit('receive', { message, name: users[socket.id], time: timestamp, userId: message.recipientId });
+
+        } else {
+            socket.to(roomId).emit('receive', { message, name: users[socket.id], time: timestamp });
+
+        }
+
     });
 
     socket.on('disconnect', () => {
         const roomId = rooms.get(socket.id);
         if (roomId) {
-            socket.to(roomId).emit('userLeftRoom', {name: users[socket.id], roomId, userId: socket.id });
+            socket.to(roomId).emit('userLeftRoom', { name: users[socket.id], roomId, userId: socket.id });
             socket.leave(roomId);
             rooms.delete(socket.id);
         }
         delete users[socket.id];
     });
 });
+
+
+
+
+
+
+
+
+
+
+// const recipients = new Set();
+
+// io.on('connection', (socket) => {
+//   socket.on('joinRoom', (roomId) => {
+//     socket.join(roomId);
+//     recipients.add(socket.id); 
+//     // ...
+//   });
+
+//   console.log('recipients.......', recipients)
+
+//   socket.on('leaveRoom', (roomId) => {
+//     socket.leave(roomId);
+//     recipients.delete(socket.id); 
+//     // ...
+//   });
+
+//   socket.on('send', (message) => {
+//     const roomId = rooms.get(socket.id);
+//     const timestamp = new Date().toUTCString();
+//     const recipientId = message.recipientId;
+
+//     if (recipientId && recipients.has(recipientId)) {
+//       io.to(recipientId).emit('receive', {
+//         message,
+//         name: users[socket.id],
+//         time: timestamp,
+//         userId: recipientId,
+//       });
+//     } else {
+//       socket.to(roomId).emit('receive', {
+//         message,
+//         name: users[socket.id],
+//         time: timestamp,
+//       });
+//     }
+//   });
+
+//   socket.on('disconnect', () => {
+//     const roomId = rooms.get(socket.id);
+//     if (roomId) {
+//       socket.to(roomId).emit('userLeftRoom', {
+//         name: users[socket.id],
+//         roomId,
+//         userId: socket.id,
+//       });
+//       socket.leave(roomId);
+//       rooms.delete(socket.id);
+//       recipients.delete(socket.id); 
+//     }
+//     delete users[socket.id];
+
+//   });
+// });
 
 
 

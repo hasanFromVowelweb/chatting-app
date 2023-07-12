@@ -93,6 +93,7 @@ export default function Chat({ userName, roomID, chatName }) {
     })
 
     socket.on('receive', data => {
+      console.log('dataReceived........: ', data)
       recievedChat(data.message, data.name, data.time)
     })
 
@@ -110,11 +111,22 @@ export default function Chat({ userName, roomID, chatName }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const message = messageInput.value;
-    const timestamp = new Date().toUTCString()
-    sendChat(message, 'You', timestamp)
-    socket.emit('send', { roomID, message });
+    const timestamp = new Date().toUTCString();
+  
+    const id = prompt('Enter a recipient ID:');
+    const recipientId = id && id.trim(); // Trim whitespace from the entered ID
+  
+    if (recipientId?.length > 2) {
+      sendChat(message, 'You', timestamp);
+      socket.emit('send', { roomID, message, recipientId });
+    } else {
+      sendChat(message, 'You', timestamp);
+      socket.emit('send', { roomID, message });
+    }
+  
     messageInput.value = '';
   };
+  
 
 
   useEffect(() => {
@@ -150,7 +162,6 @@ export default function Chat({ userName, roomID, chatName }) {
   };
 
 
-
   ////////////////////////////////////////
 
   return (
@@ -174,7 +185,7 @@ export default function Chat({ userName, roomID, chatName }) {
       </div>
       <div className="message-container chat_body">
         {/* ///////////////////////recieved message/////////////// */}
-        
+
 
         {/* <p className=' chat_message'>
           <span className='chat_name'>Randy</span>
